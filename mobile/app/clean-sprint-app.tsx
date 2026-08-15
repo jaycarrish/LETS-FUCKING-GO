@@ -22,6 +22,7 @@ type PersonalMission = {
   detail: string;
   leverage: number;
   status: "ready" | "active" | "done";
+  evidence?: string;
 };
 
 type BoardResponse = { board?: CleanSprintBoard; error?: string };
@@ -190,12 +191,31 @@ export function CleanSprintApp() {
   }
 
   function startPersonal(id: string) {
-    saveMissions(missions.map((mission) => mission.id === id ? { ...mission, status: "active" } : mission));
+    saveMissions(
+      missions.map((mission) =>
+        mission.id === id ? { ...mission, status: "active", evidence: "" } : mission,
+      ),
+    );
   }
 
   function completePersonal(id: string) {
-    saveMissions(missions.map((mission) => mission.id === id ? { ...mission, status: "done" } : mission));
+    const target = missions.find((mission) => mission.id === id);
+    if (!target || (target.evidence ?? "").trim().length === 0) {
+      setToast("Add evidence before marking this mission done.");
+      return;
+    }
+    saveMissions(
+      missions.map((mission) =>
+        mission.id === id ? { ...mission, status: "done", evidence: target.evidence?.trim() } : mission,
+      ),
+    );
     setToast("Personal LFG win recorded on this device.");
+  }
+
+  function updateEvidence(id: string, evidence: string) {
+    saveMissions(missions.map((mission) =>
+      mission.id === id ? { ...mission, evidence } : mission,
+    ));
   }
 
   return (
@@ -446,8 +466,31 @@ export function CleanSprintApp() {
                 <div className="mission-foot">
                   <span className="tag">{mission.status === "done" ? "done" : mission.status}</span>
                   {mission.status === "ready" && <button type="button" onClick={() => startPersonal(mission.id)}>START</button>}
-                  {mission.status === "active" && <button className="complete" type="button" onClick={() => completePersonal(mission.id)}>DONE</button>}
+                  {mission.status === "active" && (
+                    <button
+                      className="complete"
+                      disabled={((mission.evidence ?? "").trim().length === 0)}
+                      type="button"
+                      onClick={() => completePersonal(mission.id)}
+                    >
+                      DONE
+                    </button>
+                  )}
                 </div>
+                {mission.status === "active" && (
+                  <label className="evidence-label">
+                    Evidence
+                    <textarea
+                      value={mission.evidence ?? ""}
+                      rows={3}
+                      placeholder="What did you finish? What changed?"
+                      onChange={(event) => updateEvidence(mission.id, event.target.value)}
+                    />
+                  </label>
+                )}
+                {mission.status === "done" && mission.evidence ? (
+                  <p className="evidence-summary">Evidence: {mission.evidence}</p>
+                ) : null}
               </article>
             ))}
           </section>
