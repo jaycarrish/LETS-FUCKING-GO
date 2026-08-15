@@ -1,0 +1,60 @@
+
+PowerShell ready.
+Ctrl+A selects the current command.
+Type 'sysinfo' for system information.
+Type 'edit-profile' to edit this profile.
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Let's Fucking Go</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0e1116;--surface:#171c24;--surface2:#202733;--text:#f3f5f7;--muted:#9ca8b6;--line:#303a48;--accent:#69e0c7;--accent2:#ffb36b;--danger:#ff7d7d}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input{font:inherit}button{cursor:pointer}.app{max-width:560px;min-height:100svh;margin:auto;padding:22px 18px 34px;display:flex;flex-direction:column}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}.title{margin:4px 0 0;font-size:30px;line-height:1.05;letter-spacing:-.04em}.stats{display:flex;gap:10px}.stat{text-align:right}.stat b{display:block;font-size:20px}.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+    .hero{margin:44px 0 24px}.hero h2{font-size:21px;line-height:1.12;margin:0 0 8px}.hero p{margin:0;color:var(--muted)}.primary{width:100%;min-height:76px;border:0;border-radius:18px;background:var(--accent);color:#071613;font-weight:800;font-size:21px;margin-top:22px}.primary:focus-visible,.secondary:focus-visible,.icon:focus-visible,.evidence-form input:focus-visible{outline:3px solid var(--accent2);outline-offset:3px}.primary:disabled{opacity:.55;cursor:not-allowed}
+    .section{border-top:1px solid var(--line);padding-top:18px;margin-top:auto}.section h3{font-size:13px;margin:0 0 12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em}.mission{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.mission-head{display:flex;justify-content:space-between;gap:10px}.mission h3{color:var(--text);text-transform:none;letter-spacing:0;font-size:18px;margin:0}.score{color:var(--accent2);font-weight:700;white-space:nowrap}.meta{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;color:var(--muted);font-size:13px}.meta span{background:var(--surface2);padding:4px 8px;border-radius:6px}.mission p{color:var(--muted);margin:0}.secondary{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:10px;padding:10px 13px;margin-top:16px}.actions{display:flex;gap:8px;flex-wrap:wrap}.evidence-form{display:flex;gap:8px;margin-top:10px}.evidence-form input{min-width:0;flex:1;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px}.empty{color:var(--muted);padding:12px 0}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;max-width:calc(100% - 36px);text-align:center}.hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <main class="app" aria-live="polite">
+    <header class="top"><div><div class="eyebrow">Execution game</div><h1 class="title">Let’s Fucking Go</h1></div><div class="stats"><div class="stat"><b id="completedCount">0</b><span>completed</span></div><div class="stat"><b id="unlockedCount">0</b><span>unlocked</span></div></div></header>
+    <section class="hero" id="homeView"><h2 id="heroTitle">One move. Then the next.</h2><p id="heroCopy">The app picks the highest-leverage mission you can actually start right now.</p><button class="primary" id="goButton" type="button">LET’S FUCKING GO</button></section>
+    <section class="section"><h3>Next mission</h3><div id="missionSlot"></div></section>
+    <div id="toast" class="toast hidden" role="status"></div>
+  </main>
+  <script>
+    const SEED_OPPORTUNITIES = [
+      {id:'capture-inspiration',title:'Capture one useful inspiration',score:92,effort:1,dependencies:[],evidenceType:'note',status:'available',description:'Save one idea, reference, or possibility that could become a real project.'},
+      {id:'define-maker-outcome',title:'Write what you want to make',score:88,effort:1,dependencies:['capture-inspiration'],evidenceType:'text',status:'locked',description:'Turn the spark into one concrete outcome with a clear finish line.'},
+      {id:'make-first-prototype',title:'Build the smallest working prototype',score:96,effort:3,dependencies:['define-maker-outcome'],evidenceType:'link',status:'locked',description:'Create the first runnable version. Small, real, and testable beats perfect.'},
+      {id:'get-first-feedback',title:'Put the prototype in front of one person',score:84,effort:2,dependencies:['make-first-prototype'],evidenceType:'note',status:'locked',description:'Collect one piece of direct feedback and record what changes next.'},
+      {id:'ship-proof',title:'Ship a verified improvement',score:90,effort:2,dependencies:['get-first-feedback'],evidenceType:'link',status:'locked',description:'Publish the improvement and attach proof that it works in the real world.'}
+    ];
+    const STORAGE_KEY='lets-fucking-go-v1';
+    const freshState=()=>({opportunities:SEED_OPPORTUNITIES.map(x=>({...x})),completedCount:0,unlockedCount:0,activeId:null,evidence:{}});
+    let state=loadState();
+    function loadState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));return saved?.opportunities?saved:freshState()}catch{return freshState()}}
+    function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+    function completedIds(){return new Set(state.opportunities.filter(x=>x.status==='completed').map(x=>x.id))}
+    function isUnlocked(item){return item.dependencies.every(id=>completedIds().has(id))}
+    function nextMission(){return state.opportunities.filter(x=>x.status!=='completed'&&isUnlocked(x)).sort((a,b)=>(b.score-b.effort*5)-(a.score-a.effort*5))[0]||null}
+    function render(){
+      const next=nextMission(); document.getElementById('completedCount').textContent=state.completedCount; document.getElementById('unlockedCount').textContent=state.opportunities.filter(x=>x.status!=='completed'&&isUnlocked(x)).length; document.getElementById('goButton').disabled=!next;
+      document.getElementById('goButton').textContent=next?'LET’S FUCKING GO':'ALL MISSIONS COMPLETE';
+      const active=state.activeId&&state.opportunities.find(x=>x.id===state.activeId); const item=active||next; const slot=document.getElementById('missionSlot');
+      if(!item){slot.innerHTML='<div class="empty">You cleared the board. Add another opportunity to keep going.</div>';return}
+      const started=state.activeId===item.id; const evidence=state.evidence[item.id]||'';
+      slot.innerHTML=`<article class="mission"><div class="mission-head"><h3>${escapeHtml(item.title)}</h3><span class="score">${item.score} leverage</span></div><div class="meta"><span>${item.effort} effort</span><span>${item.evidenceType} proof</span><span>${started?'in progress':'ready'}</span></div><p>${escapeHtml(item.description)}</p><div class="actions">${started?`<button class="secondary" id="completeButton" type="button">Complete mission</button>`:`<button class="secondary" id="startButton" type="button">Start mission</button>`}<button class="secondary" id="evidenceButton" type="button">${evidence?'Edit evidence':'Attach evidence'}</button></div><div class="evidence-form ${state.showEvidence?'':'hidden'}"><input id="evidenceInput" value="${escapeAttr(evidence)}" placeholder="Paste a link or write what happened" aria-label="Evidence"/><button class="secondary" id="saveEvidence" type="button">Save</button></div></article>`;
+      document.getElementById('startButton')?.addEventListener('click',()=>{state.activeId=item.id;save();render();}); document.getElementById('completeButton')?.addEventListener('click',()=>complete(item)); document.getElementById('evidenceButton')?.addEventListener('click',()=>{state.showEvidence=!state.showEvidence;render();}); document.getElementById('saveEvidence')?.addEventListener('click',()=>{state.evidence[item.id]=document.getElementById('evidenceInput').value.trim();state.showEvidence=false;save();render();toast('Evidence attached.');});
+    }
+    function complete(item){if(!state.evidence[item.id]){state.showEvidence=true;render();toast('Attach evidence before completing.');return} item.status='completed';state.completedCount++;state.activeId=null;state.showEvidence=false;save();render();toast('Win verified. Next mission unlocked.');}
+    document.getElementById('goButton').addEventListener('click',()=>{const next=nextMission();if(next){state.activeId=next.id;save();render();document.getElementById('missionSlot').scrollIntoView({block:'center'});}});
+    function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escapeAttr(v){return escapeHtml(v)}function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.remove('hidden');setTimeout(()=>el.classList.add('hidden'),2200)}
+    render();
+  </script>
+</body>
+</html>
+
