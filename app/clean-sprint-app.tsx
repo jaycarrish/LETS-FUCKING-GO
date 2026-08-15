@@ -89,11 +89,11 @@ export function CleanSprintApp() {
   const [board, setBoard] = useState<CleanSprintBoard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(Date.now());
-  const [person, setPerson] = useState<Person>("Shared");
+  const [now, setNow] = useState(0);
+  const [person, setPerson] = useState<Person>(() => loadStored<Person>(PERSON_KEY, "Shared"));
   const [tab, setTab] = useState<"sprint" | "lfg">("sprint");
   const [toast, setToast] = useState<string | null>(null);
-  const [missions, setMissions] = useState<PersonalMission[]>(DEFAULT_MISSIONS);
+  const [missions, setMissions] = useState<PersonalMission[]>(() => loadStored<PersonalMission[]>(PERSONAL_KEY, DEFAULT_MISSIONS));
 
   const refresh = useCallback(async () => {
     try {
@@ -108,11 +108,12 @@ export function CleanSprintApp() {
   }, []);
 
   useEffect(() => {
-    setPerson(loadStored<Person>(PERSON_KEY, "Shared"));
-    setMissions(loadStored<PersonalMission[]>(PERSONAL_KEY, DEFAULT_MISSIONS));
-    void refresh();
+    const initial = window.setTimeout(() => void refresh(), 0);
     const poll = window.setInterval(() => void refresh(), 8_000);
-    return () => window.clearInterval(poll);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(poll);
+    };
   }, [refresh]);
 
   useEffect(() => {

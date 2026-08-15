@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { getDb } from "../../../db";
+import { getDb, getRawDb } from "../../../db";
 import { cleanSprintBoards } from "../../../db/schema";
 import {
   completedTaskCount,
@@ -18,10 +18,6 @@ type ActionPayload =
   | { action: "resume" }
   | { action: "complete-task"; taskId: string; owner?: Person }
   | { action: "restart" };
-
-function now() {
-  return new Date().toISOString();
-}
 
 function readableError(error: unknown) {
   const message = error instanceof Error ? error.message : "Unexpected error";
@@ -134,12 +130,14 @@ async function readBoard() {
   return initial;
 }
 
-async function writeBoard(board: CleanSprintBoard) {
-  const db = getDb();
-  await db
-    .update(cleanSprintBoards)
-    .set({ stateJson: JSON.stringify(board), updatedAt: board.updatedAt })
-    .where(eq(cleanSprintBoards.id, BOARD_ID));
+async function writeBoardIfUnchanged(current: CleanSprintBoard, next: CleanSprintBoard) {
+  const result = await getRawDb()
+    .prepare(
+      "UPDATE clean_sprint_boards SET state_json = ?, updated_at = ? WHERE id = ? AND updated_at = ?",
+    )
+    .bind(JSON.stringify(next), next.updatedAt, BOARD_ID, current.updatedAt)
+    .run();
+  return result.meta.changes === 1;
 }
 
 export async function GET() {
@@ -157,10 +155,20 @@ export async function PATCH(request: Request) {
     if (!action || typeof action.action !== "string") {
       return Response.json({ error: "A Clean Sprint action is required." }, { status: 400 });
     }
-    const current = await readBoard();
-    const next = settleBoard(current, action);
-    await writeBoard(next);
-    return Response.json({ board: next });
+    // Two phones can report tasks at the same time. A compare-and-set write
+    // avoids one completion silently overwriting the other; the loser retries
+    // against the freshly saved board.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const current = await readBoard();
+      const next = settleBoard(current, action);
+      if (await writeBoardIfUnchanged(current, next)) {
+        return Response.json({ board: next });
+      }
+    }
+    return Response.json(
+      { error: "Someone updated the board at the same moment. Tap the action once more." },
+      { status: 409 },
+    );
   } catch (error) {
     return Response.json({ error: readableError(error) }, { status: 400 });
   }
