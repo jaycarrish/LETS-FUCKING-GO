@@ -2,12 +2,19 @@ import { eq } from "drizzle-orm";
 import { getDb, getRawDb } from "../../../db";
 import { cleanSprintBoards } from "../../../db/schema";
 import {
+  availableTickets,
   completedTaskCount,
   firstOpenPhaseId,
   makeFreshBoard,
+  normalizeBoard,
+  REWARD_CARDS,
+  REWARD_PACKS,
   taskCount,
   type CleanSprintBoard,
   type Person,
+  type RewardCard,
+  type RewardPack,
+  type RewardRarity,
 } from "../../clean-sprint-types";
 
 const BOARD_ID = "house-reset-75";
@@ -17,6 +24,8 @@ type ActionPayload =
   | { action: "pause" }
   | { action: "resume" }
   | { action: "complete-task"; taskId: string; owner?: Person }
+  | { action: "choose-pack"; packId: string }
+  | { action: "spend-pack"; packId?: string; owner?: Person }
   | { action: "restart" };
 
 function readableError(error: unknown) {
@@ -29,6 +38,37 @@ function readableError(error: unknown) {
 
 function cloneBoard(board: CleanSprintBoard): CleanSprintBoard {
   return JSON.parse(JSON.stringify(board)) as CleanSprintBoard;
+}
+
+function weightedChoice<T>(entries: Array<{ value: T; weight: number }>) {
+  const total = entries.reduce((sum, entry) => sum + Math.max(0, entry.weight), 0);
+  if (total <= 0) return entries[0]?.value;
+  let roll = Math.random() * total;
+  for (const entry of entries) {
+    roll -= Math.max(0, entry.weight);
+    if (roll <= 0) return entry.value;
+  }
+  return entries.at(-1)?.value;
+}
+
+function pickRewardCard(board: CleanSprintBoard, pack: RewardPack) {
+  const weightedRarities = Object.entries(pack.weights)
+    .filter((entry): entry is [RewardRarity, number] => Number(entry[1]) > 0)
+    .map(([rarity, weight]) => ({ value: rarity as RewardRarity, weight }));
+  const chosenRarity = weightedChoice(weightedRarities) ?? "Common";
+  const unlocked = new Set(board.vault.unlockedCardIds);
+
+  let pool = REWARD_CARDS.filter((card) => card.rarity === chosenRarity && !unlocked.has(card.id));
+  if (!pool.length) pool = REWARD_CARDS.filter((card) => card.rarity === chosenRarity);
+  if (!pool.length) pool = REWARD_CARDS.filter((card) => !unlocked.has(card.id));
+  if (!pool.length) pool = REWARD_CARDS;
+
+  return weightedChoice(
+    pool.map((card) => ({
+      value: card,
+      weight: Math.max(1, card.rarityRank * 16 + card.stats.aura + card.stats.presence),
+    })),
+  ) as RewardCard;
 }
 
 function elapsedAt(board: CleanSprintBoard, at = Date.now()) {
@@ -80,8 +120,9 @@ function settleBoard(board: CleanSprintBoard, action: ActionPayload, at = new Da
       task.status = "done";
       task.completedAt = stamp;
       task.completedBy = actor;
+      next.vault.earnedTickets += 1;
       next.activePhaseId = firstOpenPhaseId(next);
-      next.lastAction = `${actor} reported “${task.title}” done.`;
+      next.lastAction = `${actor} reported "${task.title}" done and banked 1 ticket.`;
       if (completedTaskCount(next) === taskCount(next)) {
         stopClock(next, at.getTime());
         next.status = "complete";
@@ -95,12 +136,37 @@ function settleBoard(board: CleanSprintBoard, action: ActionPayload, at = new Da
       }
       break;
     }
+    case "choose-pack": {
+      const pack = REWARD_PACKS.find((candidate) => candidate.id === action.packId);
+      if (!pack) throw new Error("That reward pack is not available.");
+      next.vault.selectedPackId = pack.id;
+      next.lastAction = `${pack.name} is armed for the next spend.`;
+      break;
+    }
+    case "spend-pack": {
+      const pack = REWARD_PACKS.find((candidate) => candidate.id === (action.packId ?? next.vault.selectedPackId));
+      if (!pack) throw new Error("That reward pack is not available.");
+      if (availableTickets(next) < pack.cost) {
+        throw new Error(`You need ${pack.cost - availableTickets(next)} more tickets for ${pack.name}.`);
+      }
+      const card = pickRewardCard(next, pack);
+      next.vault.spentTickets += pack.cost;
+      next.vault.selectedPackId = pack.id;
+      next.vault.currentCardId = card.id;
+      if (!next.vault.unlockedCardIds.includes(card.id)) {
+        next.vault.unlockedCardIds.unshift(card.id);
+      }
+      next.vault.recentCardIds = [card.id, ...next.vault.recentCardIds.filter((id) => id !== card.id)].slice(0, 6);
+      next.lastAction = `${actor} spent ${pack.cost} tickets and pulled ${card.name}.`;
+      break;
+    }
     case "restart":
       if (next.status !== "complete") throw new Error("Finish the current run before starting a fresh one.");
       {
         const fresh = makeFreshBoard(stamp);
         fresh.runId = next.runId;
         fresh.history = next.history;
+        fresh.vault = next.vault;
         fresh.lastAction = "Fresh board ready for the next shared run.";
         return fresh;
       }
@@ -119,7 +185,7 @@ async function readBoard() {
     .from(cleanSprintBoards)
     .where(eq(cleanSprintBoards.id, BOARD_ID));
   const existing = rows[0];
-  if (existing) return JSON.parse(existing.stateJson) as CleanSprintBoard;
+  if (existing) return normalizeBoard(JSON.parse(existing.stateJson) as CleanSprintBoard);
 
   const initial = makeFreshBoard();
   await db.insert(cleanSprintBoards).values({
