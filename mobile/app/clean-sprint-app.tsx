@@ -86,7 +86,7 @@ function sprintHeading(board: CleanSprintBoard) {
 }
 
 function sprintCopy(board: CleanSprintBoard) {
-  if (board.status === "idle") return "One shared 75-minute run. Start clean, finish usable, and do not make mystery piles.";
+  if (board.status === "idle") return "One shared 20-minute run. Start clean, finish usable, and do not make mystery piles.";
   if (board.status === "complete") return "Done buttons are self-reports from the household, not Bob verification.";
   return board.lastAction;
 }
@@ -235,10 +235,10 @@ export function CleanSprintApp() {
               </div>
               <p className="status-copy">{sprintCopy(board)}</p>
             </div>
-            <div className="timer"><strong>{clock(elapsed)}</strong><span>of 75:00</span></div>
+            <div className="timer"><strong>{clock(elapsed)}</strong><span>of 20:00</span></div>
           </section>
           <div className="control-row">
-            {board.status === "idle" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "start", owner: person }, "Shared sprint started.")}>START THE 75-MIN SPRINT</button>}
+            {board.status === "idle" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "start", owner: person }, "Shared sprint started.")}>START A 20-MIN SPRINT</button>}
             {board.status === "running" && <button className="button warning" disabled={busy} type="button" onClick={() => void act({ action: "pause" }, "Sprint paused. Nothing is lost.")}>PAUSE</button>}
             {board.status === "paused" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "resume", owner: person }, "Sprint resumed.")}>RESUME</button>}
             {board.status === "complete" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "restart" }, "Fresh board ready.")}>START A NEW RUN</button>}
@@ -252,7 +252,7 @@ export function CleanSprintApp() {
           </div>
           <section className="grid">
             <section className="card">
-              <div className="card-header"><h2>Shared 75-minute run</h2><span className="label">{completed}/{total} reported</span></div>
+              <div className="card-header"><h2>Shared 20-minute run</h2><span className="label">{completed}/{total} reported</span></div>
               <div className="phase-list">
                 {board.phases.map((phase, index) => {
                   const done = phaseIsDone(phase);
