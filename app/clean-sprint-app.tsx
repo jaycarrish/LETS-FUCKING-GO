@@ -15,13 +15,24 @@ import {
   type Person,
   type RewardCard,
 } from "./clean-sprint-types";
+import { TEN_X_MISSIONS } from "./ten-x-missions";
 
 type PersonalMission = {
   id: string;
+  sourceId?: string;
+  rank?: number;
+  tier?: string;
+  category?: string;
   title: string;
   detail: string;
+  mechanism?: string;
+  successMetric?: string;
+  horizon?: string;
+  owner?: string;
   leverage: number;
+  tickets?: number;
   status: "ready" | "active" | "done";
+  evidence?: string;
 };
 
 type BoardResponse = { board?: CleanSprintBoard; error?: string };
@@ -29,29 +40,8 @@ type TabId = "sprint" | "rewards" | "lfg";
 
 const PERSONAL_KEY = "lets-fucking-go-v2-personal";
 const PERSON_KEY = "lfg-clean-sprint-person";
-const DEFAULT_MISSIONS: PersonalMission[] = [
-  {
-    id: "capture",
-    title: "Capture one useful inspiration",
-    detail: "Save the idea, reference, or possibility before it disappears.",
-    leverage: 92,
-    status: "ready",
-  },
-  {
-    id: "outcome",
-    title: "Write the concrete outcome",
-    detail: "Define what done looks like in one sentence.",
-    leverage: 88,
-    status: "ready",
-  },
-  {
-    id: "prototype",
-    title: "Build the smallest working version",
-    detail: "A real testable thing beats a perfect plan.",
-    leverage: 96,
-    status: "ready",
-  },
-];
+const DEFAULT_MISSIONS: PersonalMission[] = TEN_X_MISSIONS;
+const ALL_FILTER = "all";
 
 function loadStored<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -61,6 +51,21 @@ function loadStored<T>(key: string, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function normalizeMissions(stored: PersonalMission[]) {
+  const saved = new Map(stored.map((mission) => [mission.id, mission]));
+  const merged = DEFAULT_MISSIONS.map((mission) => ({
+    ...mission,
+    status: saved.get(mission.id)?.status ?? mission.status,
+    evidence: saved.get(mission.id)?.evidence,
+  }));
+  const legacy = stored.filter((mission) => !DEFAULT_MISSIONS.some((item) => item.id === mission.id));
+  return [...merged, ...legacy];
+}
+
+function compactTier(tier = "10X") {
+  return tier.split("-")[0].trim();
 }
 
 function secondsElapsed(board: CleanSprintBoard | null, now: number) {
@@ -85,7 +90,7 @@ function sprintHeading(board: CleanSprintBoard) {
 }
 
 function sprintCopy(board: CleanSprintBoard) {
-  if (board.status === "idle") return "One shared 75-minute run. Start clean, finish usable, and do not make mystery piles.";
+  if (board.status === "idle") return "One shared 20-minute run. Start clean, finish usable, and do not make mystery piles.";
   if (board.status === "complete") return "Done buttons are self-reports from the household, not Bob verification.";
   return board.lastAction;
 }
@@ -106,7 +111,10 @@ export function CleanSprintApp() {
   const [person, setPerson] = useState<Person>(() => loadStored<Person>(PERSON_KEY, "Shared"));
   const [tab, setTab] = useState<TabId>("sprint");
   const [toast, setToast] = useState<string | null>(null);
-  const [missions, setMissions] = useState<PersonalMission[]>(() => loadStored<PersonalMission[]>(PERSONAL_KEY, DEFAULT_MISSIONS));
+  const [missions, setMissions] = useState<PersonalMission[]>(() => normalizeMissions(loadStored<PersonalMission[]>(PERSONAL_KEY, [])));
+  const [missionSearch, setMissionSearch] = useState("");
+  const [missionTier, setMissionTier] = useState(ALL_FILTER);
+  const [missionCategory, setMissionCategory] = useState(ALL_FILTER);
   const [flipped, setFlipped] = useState(false);
   const [showSkillTree, setShowSkillTree] = useState(false);
   const [previewCardId, setPreviewCardId] = useState<string | null>(null);
@@ -158,6 +166,22 @@ export function CleanSprintApp() {
         .map((id) => REWARD_CARDS.find((card) => card.id === id))
         .filter((card): card is RewardCard => Boolean(card))
     : [];
+  const missionTiers = Array.from(new Set(DEFAULT_MISSIONS.map((mission) => mission.tier).filter(Boolean))) as string[];
+  const missionCategories = Array.from(new Set(DEFAULT_MISSIONS.map((mission) => mission.category).filter(Boolean))) as string[];
+  const visibleMissions = missions.filter((mission) => {
+    const q = missionSearch.trim().toLowerCase();
+    const matchesSearch = !q || [
+      mission.sourceId,
+      mission.title,
+      mission.detail,
+      mission.successMetric,
+      mission.category,
+      mission.owner,
+    ].some((value) => value?.toLowerCase().includes(q));
+    const matchesTier = missionTier === ALL_FILTER || mission.tier === missionTier;
+    const matchesCategory = missionCategory === ALL_FILTER || mission.category === missionCategory;
+    return matchesSearch && matchesTier && matchesCategory;
+  });
 
   function pickPerson(next: Person) {
     setPerson(next);
@@ -182,20 +206,53 @@ export function CleanSprintApp() {
       setBoard(payload.board);
       setError(null);
       setToast(success);
+      return true;
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The update did not save.");
+      return false;
     } finally {
       setBusy(false);
     }
   }
 
   function startPersonal(id: string) {
-    saveMissions(missions.map((mission) => mission.id === id ? { ...mission, status: "active" } : mission));
+    saveMissions(
+      missions.map((mission) =>
+        mission.id === id ? { ...mission, status: "active", evidence: "" } : mission,
+      ),
+    );
   }
 
-  function completePersonal(id: string) {
-    saveMissions(missions.map((mission) => mission.id === id ? { ...mission, status: "done" } : mission));
-    setToast("Personal LFG win recorded on this device.");
+  async function completePersonal(id: string) {
+    const target = missions.find((mission) => mission.id === id);
+    if (!target || (target.evidence ?? "").trim().length === 0) {
+      setToast("Add evidence before marking this mission done.");
+      return;
+    }
+    const tickets = target.tickets ?? 1;
+    const saved = await act(
+      {
+        action: "earn-personal",
+        missionId: target.sourceId ?? target.id,
+        title: target.title,
+        tickets,
+        evidence: target.evidence?.trim(),
+        owner: person,
+      },
+      `${target.sourceId ?? "Personal LFG"} banked ${tickets} ticket${tickets === 1 ? "" : "s"}.`,
+    );
+    if (!saved) return;
+    saveMissions(
+      missions.map((mission) =>
+        mission.id === id ? { ...mission, status: "done", evidence: target.evidence?.trim() } : mission,
+      ),
+    );
+  }
+
+  function updateEvidence(id: string, evidence: string) {
+    saveMissions(missions.map((mission) =>
+      mission.id === id ? { ...mission, evidence } : mission,
+    ));
   }
 
   return (
@@ -215,10 +272,10 @@ export function CleanSprintApp() {
               </div>
               <p className="status-copy">{sprintCopy(board)}</p>
             </div>
-            <div className="timer"><strong>{clock(elapsed)}</strong><span>of 75:00</span></div>
+            <div className="timer"><strong>{clock(elapsed)}</strong><span>of 20:00</span></div>
           </section>
           <div className="control-row">
-            {board.status === "idle" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "start", owner: person }, "Shared sprint started.")}>START THE 75-MIN SPRINT</button>}
+            {board.status === "idle" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "start", owner: person }, "Shared sprint started.")}>START A 20-MIN SPRINT</button>}
             {board.status === "running" && <button className="button warning" disabled={busy} type="button" onClick={() => void act({ action: "pause" }, "Sprint paused. Nothing is lost.")}>PAUSE</button>}
             {board.status === "paused" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "resume", owner: person }, "Sprint resumed.")}>RESUME</button>}
             {board.status === "complete" && <button className="button primary" disabled={busy} type="button" onClick={() => void act({ action: "restart" }, "Fresh board ready.")}>START A NEW RUN</button>}
@@ -232,7 +289,7 @@ export function CleanSprintApp() {
           </div>
           <section className="grid">
             <section className="card">
-              <div className="card-header"><h2>Shared 75-minute run</h2><span className="label">{completed}/{total} reported</span></div>
+              <div className="card-header"><h2>Shared 20-minute run</h2><span className="label">{completed}/{total} reported</span></div>
               <div className="phase-list">
                 {board.phases.map((phase, index) => {
                   const done = phaseIsDone(phase);
@@ -434,20 +491,70 @@ export function CleanSprintApp() {
         <>
           <section className="card card-pad">
             <div className="label">Personal execution lane</div>
-            <h2 className="section-title">Your personal LFG missions</h2>
-            <p className="subtitle">Clean Sprint stays live for the house. This lane keeps individual momentum moving too. It is saved only on this device.</p>
+            <h2 className="section-title">Bob's 100 10X missions</h2>
+            <p className="subtitle">Clean Sprint stays live for the house. This lane turns the 10X review into ticket-earning background work. Evidence is required before Done.</p>
+            <div className="mission-toolbar">
+              <input
+                aria-label="Search 10X missions"
+                placeholder="Search missions"
+                value={missionSearch}
+                onChange={(event) => setMissionSearch(event.target.value)}
+              />
+              <select aria-label="Filter by tier" value={missionTier} onChange={(event) => setMissionTier(event.target.value)}>
+                <option value={ALL_FILTER}>All tiers</option>
+                {missionTiers.map((tier) => <option key={tier} value={tier}>{compactTier(tier)}</option>)}
+              </select>
+              <select aria-label="Filter by category" value={missionCategory} onChange={(event) => setMissionCategory(event.target.value)}>
+                <option value={ALL_FILTER}>All categories</option>
+                {missionCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+            </div>
+            <p className="mission-count">{visibleMissions.length} of {DEFAULT_MISSIONS.length} recommendations shown.</p>
           </section>
           <section className="lfg-grid">
-            {missions.map((mission) => (
+            {visibleMissions.map((mission) => (
               <article className={`mission ${mission.status === "active" ? "active" : ""} ${mission.status === "done" ? "done" : ""}`} key={mission.id}>
-                <div className="label">{mission.leverage} leverage</div>
+                <div className="mission-topline">
+                  <div className="label">{mission.sourceId ?? mission.id} · {mission.leverage} leverage</div>
+                  <span>{mission.tickets ?? 1} ticket{(mission.tickets ?? 1) === 1 ? "" : "s"}</span>
+                </div>
                 <strong>{mission.title}</strong>
                 <p>{mission.detail}</p>
+                {mission.mechanism ? <p className="mission-mechanism">{mission.mechanism}</p> : null}
+                <div className="mission-meta">
+                  {mission.category ? <span>{mission.category}</span> : null}
+                  {mission.horizon ? <span>{mission.horizon}</span> : null}
+                  {mission.owner ? <span>{mission.owner}</span> : null}
+                </div>
+                {mission.successMetric ? <p className="success-line">Success: {mission.successMetric}</p> : null}
                 <div className="mission-foot">
                   <span className="tag">{mission.status === "done" ? "done" : mission.status}</span>
                   {mission.status === "ready" && <button type="button" onClick={() => startPersonal(mission.id)}>START</button>}
-                  {mission.status === "active" && <button className="complete" type="button" onClick={() => completePersonal(mission.id)}>DONE</button>}
+                  {mission.status === "active" && (
+                    <button
+                      className="complete"
+                      disabled={busy || ((mission.evidence ?? "").trim().length === 0)}
+                      type="button"
+                      onClick={() => void completePersonal(mission.id)}
+                    >
+                      DONE
+                    </button>
+                  )}
                 </div>
+                {mission.status === "active" && (
+                  <label className="evidence-label">
+                    Evidence
+                    <textarea
+                      value={mission.evidence ?? ""}
+                      rows={3}
+                      placeholder="What did you finish? What changed?"
+                      onChange={(event) => updateEvidence(mission.id, event.target.value)}
+                    />
+                  </label>
+                )}
+                {mission.status === "done" && mission.evidence ? (
+                  <p className="evidence-summary">Evidence: {mission.evidence}</p>
+                ) : null}
               </article>
             ))}
           </section>

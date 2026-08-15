@@ -29,7 +29,7 @@ test("server-renders the LFG Clean Sprint shell", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>LFG × Clean Sprint<\/title>/i);
-  assert.match(html, /LET.?S/);
+  assert.match(html, /LET(?:.|&#x27;)S/);
   assert.match(html, /CLEAN SPRINT/);
   assert.match(html, /PERSONAL LFG/);
   assert.match(html, /Every item gets one permanent home/i);

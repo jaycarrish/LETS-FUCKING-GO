@@ -29,7 +29,7 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 
@@ -108,10 +108,37 @@ h1 { margin: 5px 0 0; font-size: clamp(2rem, 7vw, 3.8rem); line-height: 0.92; le
 .mission.done { opacity: .6; }
 .mission strong { font-size: .94rem; }
 .mission p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.45; }
+.mission-toolbar { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(130px, .75fr) minmax(150px, .9fr); gap: 8px; margin-top: 14px; }
+.mission-toolbar input,
+.mission-toolbar select { min-height: 42px; width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; background: rgba(10, 13, 8, .32); color: var(--ink); }
+.mission-toolbar select option { background: #11150f; color: var(--ink); }
+.mission-count { margin: 10px 0 0; color: var(--soft); font-size: .72rem; font-weight: 760; }
+.mission-topline { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mission-topline span { flex: 0 0 auto; color: var(--lime); font-size: .68rem; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+.mission-mechanism { color: var(--ink) !important; }
+.mission-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.mission-meta span { border: 1px solid var(--line); border-radius: 999px; padding: 3px 7px; color: var(--soft); font-size: .64rem; font-weight: 780; }
+.success-line { color: var(--orange) !important; }
 .mission-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tag { border-radius: 100px; padding: 4px 7px; background: var(--panel-2); color: var(--orange); font-size: .65rem; font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
 .mission button { min-height: 33px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; background: transparent; color: var(--ink); font-size: .7rem; font-weight: 850; }
 .mission button.complete { border-color: rgba(199,255,106,.34); color: var(--lime); }
+.mission button.complete:disabled { border-color: transparent; color: var(--soft); cursor: default; }
+.mission-foot + .evidence-label,
+.evidence-label + .evidence-summary { margin-top: 6px; }
+.evidence-label { display: grid; gap: 6px; color: var(--soft); font-size: .66rem; font-weight: 820; letter-spacing: .08em; text-transform: uppercase; }
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 74px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: rgba(10, 13, 8, .32);
+  color: var(--ink);
+}
+.mission .evidence-summary { margin: 0; color: var(--muted); font-size: .7rem; line-height: 1.4; }
+.mission .evidence-summary::before { content: "— "; }
 .toast { position: fixed; z-index: 10; left: 50%; bottom: 20px; max-width: calc(100% - 34px); transform: translateX(-50%); padding: 11px 14px; border: 1px solid rgba(199,255,106,.4); border-radius: 12px; background: #202b17; color: var(--ink); box-shadow: var(--shadow); font-weight: 750; font-size: .84rem; }
 .section-title { margin: 5px 0 0; font-size: 1.42rem; letter-spacing: -0.04em; }
 
@@ -229,6 +256,7 @@ h1 { margin: 5px 0 0; font-size: clamp(2rem, 7vw, 3.8rem); line-height: 0.92; le
   .identity { order: 4; width: 100%; margin-left: 0; }
   .identity span { margin-right: auto; }
   .lfg-grid { grid-template-columns: 1fr; }
+  .mission-toolbar { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 440px) {

@@ -442,7 +442,7 @@ export function makeFreshBoard(now = new Date().toISOString()): CleanSprintBoard
       {
         id: "zones",
         title: "Set five zones",
-        minutes: "0-10 min",
+        minutes: "0-4 min",
         goal: "Give every loose item one next move before the sweep begins.",
         tasks: [
           task("trash-zone", "Trash + recycling", "Open the bag and put it where everyone can reach it.", "Shared"),
@@ -452,7 +452,7 @@ export function makeFreshBoard(now = new Date().toISOString()): CleanSprintBoard
       {
         id: "path",
         title: "Clear the main path",
-        minutes: "10-25 min",
+        minutes: "4-8 min",
         goal: "Make a usable walking lane from the front door through the house.",
         tasks: [
           task("main-path", "Front door -> pool -> dining -> kitchen -> living -> hallway", "Trash, laundry, and loose items leave the walking lane. No organizing detours.", "Shared"),
@@ -461,7 +461,7 @@ export function makeFreshBoard(now = new Date().toISOString()): CleanSprintBoard
       {
         id: "kitchen",
         title: "Kitchen reset",
-        minutes: "25-45 min",
+        minutes: "8-12 min",
         goal: "Make the kitchen safe, usable, and easy to maintain tonight.",
         tasks: [
           task("kitchen-dishes", "Dishes + sink", "Dishwash, rack, or stage every dish. Clear the sink.", "Jay"),
@@ -472,7 +472,7 @@ export function makeFreshBoard(now = new Date().toISOString()): CleanSprintBoard
       {
         id: "bathroom",
         title: "Bathroom reset",
-        minutes: "45-55 min",
+        minutes: "12-16 min",
         goal: "Leave a clean, ready bathroom - not a half-finished project.",
         tasks: [
           task("bathroom-reset", "Trash, toilet, sink, mirror + shower glass", "Quick complete pass: remove trash, sanitize, and dry visible surfaces.", "Zara"),
@@ -481,7 +481,7 @@ export function makeFreshBoard(now = new Date().toISOString()): CleanSprintBoard
       {
         id: "laundry",
         title: "Keep laundry moving",
-        minutes: "55-65 min",
+        minutes: "16-18 min",
         goal: "Launch or finish the current load without building a new pile.",
         tasks: [
           task("laundry-loop", "Start / switch / fold the current load", "Keep the laundry loop moving; clean items get their one home.", "Zara"),
@@ -490,7 +490,7 @@ export function makeFreshBoard(now = new Date().toISOString()): CleanSprintBoard
       {
         id: "living-room",
         title: "Living room first pass",
-        minutes: "65-75 min",
+        minutes: "18-20 min",
         goal: "End with a usable room, a clear floor, and no mystery piles.",
         tasks: [
           task("living-clear", "Clear bedding, clothes + loose items", "Return, laundry, trash, or box it. Do not start a side project.", "Shared"),

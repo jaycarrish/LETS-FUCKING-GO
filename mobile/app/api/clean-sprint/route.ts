@@ -24,6 +24,7 @@ type ActionPayload =
   | { action: "pause" }
   | { action: "resume" }
   | { action: "complete-task"; taskId: string; owner?: Person }
+  | { action: "earn-personal"; missionId?: string; title?: string; tickets?: number; evidence?: string; owner?: Person }
   | { action: "choose-pack"; packId: string }
   | { action: "spend-pack"; packId?: string; owner?: Person }
   | { action: "restart" };
@@ -134,6 +135,15 @@ function settleBoard(board: CleanSprintBoard, action: ActionPayload, at = new Da
         });
         next.lastAction = `${actor} completed the full house reset. LFG.`;
       }
+      break;
+    }
+    case "earn-personal": {
+      const title = typeof action.title === "string" && action.title.trim() ? action.title.trim() : "Personal LFG mission";
+      const evidence = typeof action.evidence === "string" ? action.evidence.trim() : "";
+      const tickets = Number.isFinite(action.tickets) ? Math.max(1, Math.min(8, Math.floor(action.tickets ?? 1))) : 1;
+      if (!evidence) throw new Error("Evidence is required before banking personal LFG tickets.");
+      next.vault.earnedTickets += tickets;
+      next.lastAction = `${actor} banked ${tickets} ticket${tickets === 1 ? "" : "s"} for "${title}".`;
       break;
     }
     case "choose-pack": {
