@@ -103,6 +103,10 @@ h1 { margin: 5px 0 0; font-size: clamp(2rem, 7vw, 3.8rem); line-height: 0.92; le
 .empty, .error { padding: 28px 18px; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); text-align: center; }
 .error { color: var(--rose); border-color: rgba(255,141,130,.35); }
 .lfg-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.bob-launch { position: sticky; z-index: 8; top: 10px; display: grid; gap: 10px; margin-bottom: 14px; padding: 16px; border: 1px solid rgba(199,255,106,.55); border-radius: 18px; background: rgba(19, 27, 14, .96); box-shadow: 0 16px 42px rgba(0,0,0,.42); backdrop-filter: blur(14px); }
+.bob-launch strong { display: block; margin-top: 5px; font-size: 1rem; }
+.bob-launch button { width: 100%; min-height: 72px; border: 1px solid var(--lime); border-radius: 14px; padding: 14px 18px; background: var(--lime); color: #11170d; font-size: clamp(1.35rem, 5vw, 2.25rem); font-weight: 950; letter-spacing: -.045em; box-shadow: 0 0 34px rgba(199,255,106,.2); }
+.bob-launch small { color: var(--soft); font-size: .7rem; line-height: 1.4; text-align: center; }
 .mission { display: grid; gap: 10px; padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); }
 .mission.active { border-color: rgba(199,255,106,.36); }
 .mission.done { opacity: .6; }

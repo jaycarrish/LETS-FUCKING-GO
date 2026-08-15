@@ -115,6 +115,7 @@ export function CleanSprintApp() {
   const [missionSearch, setMissionSearch] = useState("");
   const [missionTier, setMissionTier] = useState(ALL_FILTER);
   const [missionCategory, setMissionCategory] = useState(ALL_FILTER);
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [showSkillTree, setShowSkillTree] = useState(false);
   const [previewCardId, setPreviewCardId] = useState<string | null>(null);
@@ -216,6 +217,7 @@ export function CleanSprintApp() {
   }
 
   function startPersonal(id: string) {
+    setSelectedMissionId(id);
     saveMissions(
       missions.map((mission) =>
         mission.id === id ? { ...mission, status: "active", evidence: "" } : mission,
@@ -247,6 +249,31 @@ export function CleanSprintApp() {
         mission.id === id ? { ...mission, status: "done", evidence: target.evidence?.trim() } : mission,
       ),
     );
+    window.requestAnimationFrame(() => {
+      document.getElementById("bob-launch")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function launchBobTask() {
+    const mission = missions.find((item) => item.id === selectedMissionId)
+      ?? missions.find((item) => item.status === "active");
+    if (!mission) {
+      setToast("Pick a leverage mission first.");
+      return;
+    }
+
+    const prompt = [
+      "Bob task from LET'S FUCKING GO.",
+      `Mission: ${mission.sourceId ?? mission.id} — ${mission.title}`,
+      `Objective: ${mission.detail}`,
+      mission.mechanism ? `Mechanism: ${mission.mechanism}` : "",
+      mission.successMetric ? `Acceptance: ${mission.successMetric}` : "",
+      `Suggested owner: ${mission.owner ?? "Bob"}`,
+      `Leverage: ${mission.leverage}. Ticket reward after evidence: ${mission.tickets ?? 1}.`,
+      "Execute everything safely within scope. Ask Jay only for a genuine approval or missing decision. Return evidence, blockers, and the next move. Do not claim completion without proof.",
+    ].filter(Boolean).join("\n\n");
+
+    window.location.href = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
   }
 
   function updateEvidence(id: string, evidence: string) {
@@ -489,6 +516,14 @@ export function CleanSprintApp() {
       )}
       {board && tab === "lfg" && (
         <>
+          <section className="bob-launch" id="bob-launch">
+            <div>
+              <div className="label">Dispatch selected mission to Bob</div>
+              <strong>{missions.find((item) => item.id === selectedMissionId)?.title ?? missions.find((item) => item.status === "active")?.title ?? "Choose a leverage mission below"}</strong>
+            </div>
+            <button type="button" onClick={launchBobTask}>LET&apos;S FUCKING GO</button>
+            <small>Opens Codex/ChatGPT with Bob&apos;s bounded task brief prefilled. Review it, then tap Send.</small>
+          </section>
           <section className="card card-pad">
             <div className="label">Personal execution lane</div>
             <h2 className="section-title">Bob's 100 10X missions</h2>
