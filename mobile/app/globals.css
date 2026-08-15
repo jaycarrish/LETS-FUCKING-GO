@@ -117,6 +117,9 @@ h1 { margin: 5px 0 0; font-size: clamp(2rem, 7vw, 3.8rem); line-height: 0.92; le
 .mission-toolbar select { min-height: 42px; width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; background: rgba(10, 13, 8, .32); color: var(--ink); }
 .mission-toolbar select option { background: #11150f; color: var(--ink); }
 .mission-count { margin: 10px 0 0; color: var(--soft); font-size: .72rem; font-weight: 760; }
+.lane-gate { display: flex; justify-content: space-between; gap: 10px; margin-top: 13px; padding: 10px 12px; border: 1px solid rgba(199,255,106,.25); border-radius: 11px; background: rgba(199,255,106,.07); font-size: .7rem; }
+.lane-gate span { color: var(--lime); font-weight: 900; letter-spacing: .05em; }
+.lane-gate strong { color: var(--ink); text-align: right; }
 .mission-topline { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .mission-topline span { flex: 0 0 auto; color: var(--lime); font-size: .68rem; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .mission-mechanism { color: var(--ink) !important; }
@@ -261,6 +264,8 @@ textarea {
   .identity span { margin-right: auto; }
   .lfg-grid { grid-template-columns: 1fr; }
   .mission-toolbar { grid-template-columns: 1fr; }
+  .lane-gate { display: grid; }
+  .lane-gate strong { text-align: left; }
 }
 
 @media (max-width: 440px) {

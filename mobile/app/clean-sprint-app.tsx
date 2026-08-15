@@ -42,6 +42,9 @@ const PERSONAL_KEY = "lets-fucking-go-v2-personal";
 const PERSON_KEY = "lfg-clean-sprint-person";
 const DEFAULT_MISSIONS: PersonalMission[] = TEN_X_MISSIONS;
 const ALL_FILTER = "all";
+const NOW_LANE_ID = "jay-carr-dj-brain";
+const NOW_MISSION_IDS = new Set(["10X-010"]);
+const NEXT_MISSION_IDS = new Set(["10X-069"]);
 
 function loadStored<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -169,7 +172,14 @@ export function CleanSprintApp() {
     : [];
   const missionTiers = Array.from(new Set(DEFAULT_MISSIONS.map((mission) => mission.tier).filter(Boolean))) as string[];
   const missionCategories = Array.from(new Set(DEFAULT_MISSIONS.map((mission) => mission.category).filter(Boolean))) as string[];
+  const nowMissions = missions.filter((mission) => NOW_MISSION_IDS.has(mission.sourceId ?? mission.id));
+  const nowVerified = nowMissions.length > 0 && nowMissions.every((mission) => mission.status === "done" && Boolean(mission.evidence?.trim()));
+  const eligibleMissionIds = new Set([
+    ...NOW_MISSION_IDS,
+    ...(nowVerified ? NEXT_MISSION_IDS : []),
+  ]);
   const visibleMissions = missions.filter((mission) => {
+    if (!eligibleMissionIds.has(mission.sourceId ?? mission.id)) return false;
     const q = missionSearch.trim().toLowerCase();
     const matchesSearch = !q || [
       mission.sourceId,
@@ -255,8 +265,8 @@ export function CleanSprintApp() {
   }
 
   function launchBobTask() {
-    const mission = missions.find((item) => item.id === selectedMissionId)
-      ?? missions.find((item) => item.status === "active");
+    const mission = missions.find((item) => item.id === selectedMissionId && eligibleMissionIds.has(item.sourceId ?? item.id))
+      ?? missions.find((item) => item.status === "active" && eligibleMissionIds.has(item.sourceId ?? item.id));
     if (!mission) {
       setToast("Pick a leverage mission first.");
       return;
@@ -265,6 +275,7 @@ export function CleanSprintApp() {
     const prompt = [
       "Bob task from LET'S FUCKING GO.",
       `Mission: ${mission.sourceId ?? mission.id} — ${mission.title}`,
+      `Governing lane: ${NOW_LANE_ID}. Do not activate or invent another product lane.`,
       `Objective: ${mission.detail}`,
       mission.mechanism ? `Mechanism: ${mission.mechanism}` : "",
       mission.successMetric ? `Acceptance: ${mission.successMetric}` : "",
@@ -526,8 +537,12 @@ export function CleanSprintApp() {
           </section>
           <section className="card card-pad">
             <div className="label">Personal execution lane</div>
-            <h2 className="section-title">Bob's 100 10X missions</h2>
-            <p className="subtitle">Clean Sprint stays live for the house. This lane turns the 10X review into ticket-earning background work. Evidence is required before Done.</p>
+            <h2 className="section-title">DJ Brain is NOW</h2>
+            <p className="subtitle">The 100 recommendations remain historical evidence. LFG can dispatch only missions attached to the canonical NOW lane. Evidence-backed completion unlocks the registered PushMyButtons NEXT handoff.</p>
+            <div className="lane-gate">
+              <span>NOW · Jay.Carr DJ Brain</span>
+              <strong>{nowVerified ? "NOW gate complete — NEXT unlocked" : "NEXT locked until NOW has evidence"}</strong>
+            </div>
             <div className="mission-toolbar">
               <input
                 aria-label="Search 10X missions"
@@ -544,13 +559,13 @@ export function CleanSprintApp() {
                 {missionCategories.map((category) => <option key={category} value={category}>{category}</option>)}
               </select>
             </div>
-            <p className="mission-count">{visibleMissions.length} of {DEFAULT_MISSIONS.length} recommendations shown.</p>
+            <p className="mission-count">{visibleMissions.length} eligible mission{visibleMissions.length === 1 ? "" : "s"} · {DEFAULT_MISSIONS.length} historical recommendations preserved.</p>
           </section>
           <section className="lfg-grid">
             {visibleMissions.map((mission) => (
               <article className={`mission ${mission.status === "active" ? "active" : ""} ${mission.status === "done" ? "done" : ""}`} key={mission.id}>
                 <div className="mission-topline">
-                  <div className="label">{mission.sourceId ?? mission.id} · {mission.leverage} leverage</div>
+                  <div className="label">{NEXT_MISSION_IDS.has(mission.sourceId ?? mission.id) ? "NEXT" : "NOW"} · {mission.sourceId ?? mission.id} · {mission.leverage} leverage</div>
                   <span>{mission.tickets ?? 1} ticket{(mission.tickets ?? 1) === 1 ? "" : "s"}</span>
                 </div>
                 <strong>{mission.title}</strong>
