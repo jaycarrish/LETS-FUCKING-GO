@@ -1,0 +1,44 @@
+name: Panel Walk offline acceptance
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'panel-walk/offline.html'
+      - 'panel-walk/sw.js'
+      - 'panel-walk/manifest.webmanifest'
+      - 'panel-walk/icon-*.png'
+      - 'panel-walk/offline-acceptance.cjs'
+      - '.github/workflows/panel-walk-offline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: panel-walk-offline-acceptance
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser tests
+        run: |
+          mkdir -p /tmp/panel-walk-verify
+          npm install --prefix /tmp/panel-walk-verify --no-audit --no-fund playwright@1.55.0
+          /tmp/panel-walk-verify/node_modules/.bin/playwright install --with-deps chromium webkit
+      - name: Exercise the hosted app with networking disabled
+        run: node panel-walk/offline-acceptance.cjs
+      - name: Preserve offline evidence and complete offline source bundle
+        if: always()
+        run: |
+          mkdir -p /tmp/panel-walk-offline-evidence/source
+          cp panel-walk/index.html panel-walk/offline.html panel-walk/sw.js panel-walk/manifest.webmanifest panel-walk/icon-*.png /tmp/panel-walk-offline-evidence/source/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: panel-walk-offline-evidence
+          path: /tmp/panel-walk-offline-evidence
+          retention-days: 7
