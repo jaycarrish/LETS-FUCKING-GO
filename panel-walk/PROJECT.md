@@ -6,12 +6,12 @@ Updated: 2026-09-24
 
 ## Purpose and delivery
 
-A low-reading-load field estimator for a 100A-to-200A electrical panel upgrade. One question / answer field at a time, large controls, Back / Next / Skip, saved progress, private pricing and a client-only estimate. Deliver the hosted working entry point, not a ChatGPT HTML attachment or simulated form in chat.
+A low-reading-load field estimator for electrical panel work, originally requested as a 100A-to-200A upgrade. Current field-scoping priority is the simplest one-for-one replacement of both existing panels with modern equipment; higher supply capacity is not established or promised. One question / answer field at a time, large controls, Back / Next / Skip, saved progress, private pricing and a client-only estimate. Deliver the hosted working entry point, not a ChatGPT HTML attachment or simulated form in chat.
 
 Offline / installable entry: https://jaycarrish.github.io/LETS-FUCKING-GO/panel-walk/offline.html#resume-bc
 Original entry remains available: https://jaycarrish.github.io/LETS-FUCKING-GO/panel-walk/
 
-The continuation fragment initializes capacity-increase and new-equipment goals on a first visit and opens the equipment question. It does not overwrite an existing saved walk. New walks start from the goals question.
+The continuation fragment initializes the originally requested capacity-increase and new-equipment goals on a first visit and opens the equipment question. It does not overwrite an existing saved walk. New walks start from the goals question. These preset goals do not supersede the latest field-scoping clarification below; no app-code change or saved-answer migration is claimed.
 
 ## Ownership and source
 
@@ -63,12 +63,14 @@ Answers remain in browser local storage, not a server database. Client text and 
 
 The user's new field photographs contradict the earlier blanket three-phase equipment assumption. Phase-specific purchasing selections and the prior conceptual render are not approved construction specifications. Hold phase-specific procurement until the photographed nameplate is matched to its enclosure and the actual supply and new-load requirements are verified. A panel nameplate rating is not a voltage measurement, and a meter-class marking does not certify the capacity of the surrounding service equipment or conductors.
 
-Confirmed scope clarification from the user: BOTH existing panels are to be replaced, and three-phase is NOT required. This supersedes the prior unresolved target-enclosure question and the earlier three-phase requirement. Preserve the already confirmed goals of increased capacity and powering new equipment. Do not ask which panel again or represent a no-three-phase requirement as a measured supply result.
+Confirmed scope clarification from the user: BOTH existing panels are to be replaced, and three-phase is NOT required. Do not ask which panel again or represent a no-three-phase requirement as a measured supply result.
 
-The remaining capacity decision is whether 200A is intended for each replacement panel or is the total service target. Do not infer two 200A supplies, an aggregate service capacity, consolidation, or meter-to-panel relationships. Do not combine separately metered loads based on physical position.
+Latest confirmed priority: the easiest one-for-one swap with new equipment. Use a like-for-like two-panel replacement as the base estimating approach: preserve separate supply/metering arrangements and the existing verified ampacity, minimize relocation and rerouting, install complete listed replacement equipment and compatible new breakers, and include necessary corrective work and required approvals. Existing conductors, raceways and upstream equipment are reuse candidates only after verification; no unconditional reuse or fit is promised. Do not combine separately metered loads based on physical position.
 
-Estimator follow-through: the current core's supply choices are three-phase-specific; record an open requirement for explicit single-phase options and separate nameplate-versus-measured supply evidence. No app-code change or saved-answer migration is claimed by this checkpoint. Keep client photographs, meter identifiers, addresses and inspection-specific details out of this public repository; those remain on the conversation/private job surface.
+The original goals of increased capacity and powering new equipment are historical requirements to reconcile, not proof of an approved 200A design. A one-for-one replacement retaining existing supply capacity is not a 200A service upgrade and does not establish capacity for additional loads. No final amp rating, new-load adequacy, abandonment of all future capacity needs, or final equipment model is confirmed by this latest instruction. Price any actually required upstream capacity expansion separately instead of silently including it or silently dropping a required load. Do not repeat the 200A-each-versus-total choice before explaining this distinction.
+
+Estimator follow-through: the current core's supply choices are three-phase-specific; record an open requirement for explicit single-phase options, a like-for-like replacement scope, and separate nameplate-versus-measured supply evidence. No app-code change or saved-answer migration is claimed by this checkpoint. Keep client photographs, meter identifiers, addresses and inspection-specific details out of this public repository; those remain on the conversation/private job surface.
 
 ## Next action
 
-Ask one field question: is 200A intended for each panel or as the total service target? Then reconcile each supply and the new-equipment nameplate requirements before selecting equipment or fixing a total price. For offline use, install / open the offline entry once while connected, wait for Ready offline, then verify opening the Home Screen icon with Wi-Fi and cellular disabled. Do not treat earlier renders or speculative purchasing lists as approved electrical design.
+Obtain usable mounting dimensions for both replacement locations so the least-disruptive enclosure layout can be selected. Before ordering, verify each supply, protection rating and circuit schedule, and reconcile any added-equipment load with available capacity. Base scope is replacement, not an unverified capacity increase. For offline use, install / open the offline entry once while connected, wait for Ready offline, then verify opening the Home Screen icon with Wi-Fi and cellular disabled. Do not treat earlier renders or speculative purchasing lists as approved electrical design.
