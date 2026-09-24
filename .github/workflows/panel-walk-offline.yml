@@ -8,6 +8,7 @@ on:
       - 'panel-walk/manifest.webmanifest'
       - 'panel-walk/icon-*.png'
       - 'panel-walk/offline-acceptance.cjs'
+      - 'panel-walk/diagnose-offline.cjs'
       - '.github/workflows/panel-walk-offline.yml'
   workflow_dispatch:
 permissions:
@@ -29,6 +30,8 @@ jobs:
           mkdir -p /tmp/panel-walk-verify
           npm install --prefix /tmp/panel-walk-verify --no-audit --no-fund playwright@1.55.0
           /tmp/panel-walk-verify/node_modules/.bin/playwright install --with-deps chromium webkit
+      - name: Diagnose WebKit worker and cache readiness
+        run: node panel-walk/diagnose-offline.cjs
       - name: Exercise the hosted app with networking disabled
         run: node panel-walk/offline-acceptance.cjs
       - name: Preserve offline evidence and complete offline source bundle
