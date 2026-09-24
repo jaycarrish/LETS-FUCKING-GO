@@ -59,6 +59,14 @@ No invented completed-job labor or material values are supplied. Overhead, conti
 
 Answers remain in browser local storage, not a server database. Client text and print output use explicit selected fields and exclude private costs / margin / purchasing notes. No client estimate was sent during testing.
 
+## Field-scoping checkpoint — 2026-09-24
+
+The user's new field photographs contradict the earlier blanket three-phase equipment assumption. Phase-specific purchasing selections and the prior conceptual render are not approved construction specifications. Hold phase-specific procurement until the photographed nameplate is matched to its enclosure and the actual supply and new-load requirements are verified. A panel nameplate rating is not a voltage measurement, and a meter-class marking does not certify the capacity of the surrounding service equipment or conductors.
+
+The exact target enclosure / extent of replacement remains unresolved. Next field question: identify whether the left cabinet, right cabinet or both are in scope. Do not combine separately metered loads or assume meter-to-panel relationships from physical position. Preserve the previously confirmed goals of increased capacity and powering new equipment.
+
+Estimator follow-through: the current core's supply choices are three-phase-specific; record an open requirement for explicit single-phase options and separate nameplate-versus-measured supply evidence. No app-code change or saved-answer migration is claimed by this checkpoint. Keep client photographs, meter identifiers, addresses and inspection-specific details out of this public repository; those remain on the conversation/private job surface.
+
 ## Next action
 
-Install / open the offline entry once while connected, wait for Ready offline, then verify opening the Home Screen icon with Wi-Fi and cellular disabled. Continue from the new-equipment question using actual field findings and costs. Do not treat earlier renders or speculative purchasing lists as approved electrical design.
+For field scoping, identify the target enclosure(s), then reconcile supply and new-equipment nameplate requirements before choosing equipment or fixing a total price. For offline use, install / open the offline entry once while connected, wait for Ready offline, then verify opening the Home Screen icon with Wi-Fi and cellular disabled. Do not treat earlier renders or speculative purchasing lists as approved electrical design.
