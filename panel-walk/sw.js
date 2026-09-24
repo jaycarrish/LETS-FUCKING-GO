@@ -1,5 +1,5 @@
 'use strict';
-const VERSION='3.1.0';
+const VERSION='3.1.1';
 const CACHE='panel-walk-offline-'+VERSION;
 const ROOT=new URL('./',self.location.href).pathname;
 const FILES=['index.html','offline.html','manifest.webmanifest','icon-192.png','icon-512.png'];
@@ -18,6 +18,5 @@ self.addEventListener('fetch',event=>{
  }
  const path=url.pathname===ROOT?ROOT+'index.html':url.pathname;
  if(!keys.includes(path))return;
- // Return locally saved assets immediately. No network attempt is needed to reopen.
  event.respondWith((async()=>{const cache=await caches.open(CACHE);const saved=await cache.match(path);if(saved)return saved;try{const response=await fetch(event.request);if(response.ok)await cache.put(path,response.clone());return response;}catch(e){return new Response('Offline copy incomplete. Reconnect and open Offline setup before leaving.',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});}})());
 });

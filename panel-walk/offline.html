@@ -9,15 +9,24 @@
 <noscript><p class="fatal">Open this hosted page in Safari. An HTML attachment preview cannot run the estimator.</p></noscript>
 <script>
 'use strict';
-const OFFLINE_BUILD='3.1.0';
+const OFFLINE_BUILD='3.1.1';
 const $=id=>document.getElementById(id);
-let ready=false,registering=false,timer;
+let ready=false,registering=false;
 const startHash=location.hash==='#resume-bc'?'#resume-bc':'';
 $('walk').src='./index.html'+startHash;
 $('walk').addEventListener('load',()=>{$('loading').hidden=true;});
 function paint(message){const s=$('offlineState');s.textContent=message||(ready?(navigator.onLine?'✓ Ready offline':'✓ Offline copy ready'):'Offline copy not ready');s.classList.toggle('ready',ready);$('guideState').textContent=ready?'This browser has the complete offline copy.':'Keep a connection until this browser says Ready offline.';}
 async function verify(){try{if(!navigator.serviceWorker.controller)throw Error('Not controlled yet');const abort=new AbortController();const timeout=setTimeout(()=>abort.abort(),4000);let r;try{r=await fetch('./_offline-proof?build='+OFFLINE_BUILD,{cache:'no-store',signal:abort.signal});}finally{clearTimeout(timeout);}const proof=await r.json();ready=r.ok&&proof.complete===true&&proof.version===OFFLINE_BUILD&&r.headers.get('X-Panel-Walk-Offline')===OFFLINE_BUILD;}catch(e){ready=false;}paint();return ready;}
-async function prepare(force=false){if(registering)return;registering=true;paint('Preparing offline copy…');try{if(!('serviceWorker' in navigator)||!isSecureContext)throw Error('Use the HTTPS link in Safari');const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});if(force&&navigator.onLine)await reg.update();await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Offline install timed out')),20000))]);for(let i=0;i<24;i++){if(await verify())break;await new Promise(r=>setTimeout(r,400));}if(!ready)paint('Connect once to finish offline setup');else if(navigator.storage?.persist){try{await navigator.storage.persist();}catch(e){}}}catch(e){paint(navigator.onLine?'Offline setup incomplete · tap setup':'Connect once to save the app offline');}finally{registering=false;}}
+async function prepare(force=false){if(registering)return;registering=true;try{
+ if(await verify()){if(force&&navigator.onLine)navigator.serviceWorker.getRegistration('./').then(r=>r?.update()).catch(()=>{});return;}
+ paint('Preparing offline copy…');
+ if(!('serviceWorker' in navigator)||!isSecureContext)throw Error('Use the HTTPS link in Safari');
+ const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+ if(force&&navigator.onLine)reg.update().catch(()=>{});
+ await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Offline install timed out')),20000))]);
+ for(let i=0;i<24;i++){if(await verify())break;await new Promise(r=>setTimeout(r,400));}
+ if(!ready)paint('Connect once to finish offline setup');else if(navigator.storage?.persist){try{await navigator.storage.persist();}catch(e){}}
+ }catch(e){if(!(await verify()))paint(navigator.onLine?'Offline setup incomplete · tap setup':'Connect once to save the app offline');}finally{registering=false;}}
 $('setup').onclick=()=>{paint();$('guide').showModal();};$('close').onclick=()=>$('guide').close();$('retry').onclick=()=>prepare(true);
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>verify());
 window.addEventListener('online',()=>prepare(true));window.addEventListener('offline',()=>verify());window.addEventListener('pageshow',()=>verify());document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')verify();});
